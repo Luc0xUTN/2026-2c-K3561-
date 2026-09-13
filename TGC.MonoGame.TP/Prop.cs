@@ -7,6 +7,8 @@ namespace TGC.MonoGame.TP;
 public class Prop
 {
     private Vector3 _position;
+    private Vector3 _scale;
+
     private Color _color;
 
     private Matrix _world;
@@ -22,12 +24,17 @@ public class Prop
 
     public void Initialize()
     {
-        _world = Matrix.CreateTranslation(_position) * Matrix.CreateScale(new Vector3(0.1f,0.1f,0.1f));
+        _world = Matrix.CreateTranslation(_position);
     }
 
     public void LoadContent(ContentManager content, string modelRoute, string shaderRoute)
     {
-        _model = content.Load<Model>(modelRoute);
+        var loadedModel = content.Load<Model>(modelRoute);
+        LoadContent(content, loadedModel, shaderRoute);
+    }
+    public void LoadContent(ContentManager content, Model model, string shaderRoute)
+    {
+        _model = model;
         _effect = content.Load<Effect>(shaderRoute);
 
         foreach (var mesh in _model.Meshes)
@@ -50,5 +57,16 @@ public class Prop
             _effect.Parameters["World"].SetValue(mesh.ParentBone.Transform * _world);
             mesh.Draw();
         }
+    }
+
+    public void SetScale(Vector3 scale)
+    {
+        _scale = new Vector3(scale.X, scale.Y, scale.Z);
+        RebuildWorld();
+    }
+
+    private void RebuildWorld()
+    {
+        _world = Matrix.CreateScale(_scale) * Matrix.CreateTranslation(_position);
     }
 }

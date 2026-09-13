@@ -30,7 +30,10 @@ public class TGCGame : Game
     private Matrix _world;
 
     private Terrain _terrain;
-    
+    private Forest _forest;
+
+    private Vector3 _cameraPosition;
+
     /// <summary>
     ///     Constructor del juego.
     /// </summary>
@@ -60,8 +63,12 @@ public class TGCGame : Game
     {
         // La logica de inicializacion que no depende del contenido se recomienda poner en este metodo.
 
-        _terrain.Initialize(GraphicsDevice);
+        float mapSize = 125f;
 
+        _terrain.Initialize(GraphicsDevice, mapSize);
+
+        _forest = new Forest();
+        _forest.Initialize(new Vector2(mapSize, mapSize));
         
         // Apago el backface culling.
         // Esto se hace por un problema en el diseno del modelo del logo de la materia.
@@ -74,7 +81,8 @@ public class TGCGame : Game
         // Configuramos nuestras matrices de la escena.
         _world = Matrix.Identity;
         // Esta hecho con el objetivo de que observe al terreno de forma isometrica 
-        _view = Matrix.CreateLookAt(new Vector3( 100, 100,  100), Vector3.Zero, Vector3.Up);
+        _cameraPosition = new Vector3(100, 100, 100);
+        _view = Matrix.CreateLookAt(_cameraPosition, Vector3.Zero, Vector3.Up);
         _projection =
             Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, GraphicsDevice.Viewport.AspectRatio, 1, 250);
 
@@ -99,6 +107,8 @@ public class TGCGame : Game
         // Cargo un efecto basico propio declarado en el Content pipeline.
         // En el juego no pueden usar BasicEffect de MG, deben usar siempre efectos propios.
         _effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
+
+        _forest.LoadContent(Content, ContentFolder3D, ContentFolderEffects + "BasicShader");
 
         // Asigno el efecto que cargue a cada parte del mesh.
         // Un modelo puede tener mas de 1 mesh internamente.
@@ -130,11 +140,20 @@ public class TGCGame : Game
             Exit();
         }
 
-        // Basado en el tiempo que paso se va generando una rotacion.
-        _rotation += Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
+        var elapsedTime = Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
 
-        _world = Matrix.CreateRotationY(_rotation);
+        var cameraSpeed = 10;
+        var cameraVelocity = cameraSpeed * elapsedTime * Vector3.One;
+        if (Keyboard.GetState().IsKeyDown(Keys.Down))
+        {
+            _cameraPosition += cameraVelocity;
+        }
+        else if (Keyboard.GetState().IsKeyDown(Keys.Up))
+        {
+            _cameraPosition -= cameraVelocity;
+        }
 
+        _view = Matrix.CreateLookAt(_cameraPosition, Vector3.Zero, Vector3.Up);
         base.Update(gameTime);
     }
 
@@ -145,24 +164,10 @@ public class TGCGame : Game
     protected override void Draw(GameTime gameTime)
     {
         GraphicsDevice.Clear(Color.Black);
-        
-        /*
-        // Aca deberiamos poner toda la logia de renderizado del juego.
-        GraphicsDevice.Clear(Color.Black);
-
-        // Para dibujar le modelo necesitamos pasarle informacion que el efecto esta esperando.
-        _effect.Parameters["View"].SetValue(_view);
-        _effect.Parameters["Projection"].SetValue(_projection);
-        _effect.Parameters["DiffuseColor"].SetValue(Color.DarkBlue.ToVector3());
-
-        foreach (var mesh in _model.Meshes)
-        {
-            _effect.Parameters["World"].SetValue(mesh.ParentBone.Transform * _world);
-            mesh.Draw();
-        }
-        */
+        //GraphicsDevice.DepthStencilState = DepthStencilState.Default;
         
         _terrain.Draw(GraphicsDevice, _view, _projection);
+        _forest.Draw(GraphicsDevice, _view, _projection);
     }
 
     /// <summary>

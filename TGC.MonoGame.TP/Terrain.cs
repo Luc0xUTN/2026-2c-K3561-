@@ -28,10 +28,10 @@ public class Terrain
         _effect = content.Load<Effect>(_shaderRoute);
     }
     
-    public void Initialize(GraphicsDevice device)
+    public void Initialize(GraphicsDevice device, float size)
     {
         _world = Matrix.Identity;
-        int escala = 25; 
+        float escala = size / 2; 
         
         var triangeVertices = new[]
         {
