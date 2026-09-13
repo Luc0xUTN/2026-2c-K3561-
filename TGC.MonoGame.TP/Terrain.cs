@@ -28,7 +28,7 @@ public class Terrain
         _effect = content.Load<Effect>(_shaderRoute);
     }
     
-    public void initilize(GraphicsDevice device)
+    public void Initialize(GraphicsDevice device)
     {
         _world = Matrix.Identity;
         int escala = 25; 

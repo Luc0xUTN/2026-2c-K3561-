@@ -29,7 +29,7 @@ public class TGCGame : Game
     private Matrix _view;
     private Matrix _world;
 
-    private Terrain _terrain; 
+    private Terrain _terrain;
     
     /// <summary>
     ///     Constructor del juego.
@@ -60,7 +60,8 @@ public class TGCGame : Game
     {
         // La logica de inicializacion que no depende del contenido se recomienda poner en este metodo.
 
-        _terrain.initilize(GraphicsDevice);
+        _terrain.Initialize(GraphicsDevice);
+
         
         // Apago el backface culling.
         // Esto se hace por un problema en el diseno del modelo del logo de la materia.
@@ -73,7 +74,7 @@ public class TGCGame : Game
         // Configuramos nuestras matrices de la escena.
         _world = Matrix.Identity;
         // Esta hecho con el objetivo de que observe al terreno de forma isometrica 
-        _view = Matrix.CreateLookAt(new Vector3( 50, 50,  50), Vector3.Zero, Vector3.Up);
+        _view = Matrix.CreateLookAt(new Vector3( 100, 100,  100), Vector3.Zero, Vector3.Up);
         _projection =
             Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, GraphicsDevice.Viewport.AspectRatio, 1, 250);
 
