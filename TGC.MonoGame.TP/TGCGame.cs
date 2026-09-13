@@ -29,6 +29,8 @@ public class TGCGame : Game
     private Matrix _view;
     private Matrix _world;
 
+    private Terrain _terrain; 
+    
     /// <summary>
     ///     Constructor del juego.
     /// </summary>
@@ -45,6 +47,9 @@ public class TGCGame : Game
         Content.RootDirectory = "Content";
         // Hace que el mouse sea visible.
         IsMouseVisible = true;
+        
+        _terrain = new Terrain(ContentFolderEffects + "BasicShader", Color.Green); 
+        
     }
 
     /// <summary>
@@ -55,6 +60,8 @@ public class TGCGame : Game
     {
         // La logica de inicializacion que no depende del contenido se recomienda poner en este metodo.
 
+        _terrain.initilize(GraphicsDevice);
+        
         // Apago el backface culling.
         // Esto se hace por un problema en el diseno del modelo del logo de la materia.
         // Una vez que empiecen su juego, esto no es mas necesario y lo pueden sacar.
@@ -65,7 +72,8 @@ public class TGCGame : Game
 
         // Configuramos nuestras matrices de la escena.
         _world = Matrix.Identity;
-        _view = Matrix.CreateLookAt(Vector3.UnitZ * 150, Vector3.Zero, Vector3.Up);
+        // Esta hecho con el objetivo de que observe al terreno de forma isometrica 
+        _view = Matrix.CreateLookAt(new Vector3( 50, 50,  50), Vector3.Zero, Vector3.Up);
         _projection =
             Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, GraphicsDevice.Viewport.AspectRatio, 1, 250);
 
@@ -79,9 +87,11 @@ public class TGCGame : Game
     /// </summary>
     protected override void LoadContent()
     {
+        _terrain.LoadContent(Content);
+        
         // Aca es donde deberiamos cargar todos los contenido necesarios antes de iniciar el juego.
         _spriteBatch = new SpriteBatch(GraphicsDevice);
-
+        
         // Cargo el modelo del logo.
         _model = Content.Load<Model>(ContentFolder3D + "tgc-logo/tgc-logo");
 
@@ -133,6 +143,9 @@ public class TGCGame : Game
     /// </summary>
     protected override void Draw(GameTime gameTime)
     {
+        GraphicsDevice.Clear(Color.Black);
+        
+        /*
         // Aca deberiamos poner toda la logia de renderizado del juego.
         GraphicsDevice.Clear(Color.Black);
 
@@ -146,6 +159,9 @@ public class TGCGame : Game
             _effect.Parameters["World"].SetValue(mesh.ParentBone.Transform * _world);
             mesh.Draw();
         }
+        */
+        
+        _terrain.Draw(GraphicsDevice, _view, _projection);
     }
 
     /// <summary>
