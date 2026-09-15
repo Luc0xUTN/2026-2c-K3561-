@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Numerics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -23,16 +24,17 @@ public class TGCGame : Game
     public const string ContentFolderTextures = "Textures/";
     
     private readonly GraphicsDeviceManager _graphics;
-
+    
     private Matrix _projection;
 
     private Terrain _terrain;
     private Forest _forest;
-
+    
+    private List<Prop> _tanksAllies = new List<Prop>();
+    private List<Prop> _tanksEnemies = new List<Prop>(); 
+    
     private Camera _camera;
     
-    private Vector3 _cameraPosition;
-
     /// <summary>
     ///     Constructor del juego.
     /// </summary>
@@ -49,9 +51,6 @@ public class TGCGame : Game
         Content.RootDirectory = "Content";
         // Hace que el mouse sea visible.
         IsMouseVisible = true;
-        
-        _terrain = new Terrain(ContentFolderEffects + "BasicShader", Color.Green);
-        _camera = new Camera(new Vector3(100,100,100), Vector3.Zero, Vector3.Up);
     }
 
     /// <summary>
@@ -60,8 +59,36 @@ public class TGCGame : Game
     /// </summary>
     protected override void Initialize()
     {
-        float mapSize = 200f;
+        float mapSize = 300f;
 
+        int maxTanks = 5;
+        
+        Vector3 enemyPosition = new Vector3(0, 1, 100);
+        Vector3 alliesPosition = new Vector3(0, 0, -100);
+        Vector3 tanksOffset = new Vector3(10,0,0);
+        Vector3 alliesScale = new Vector3(0.01f, 0.01f, 0.01f);
+        Vector3 enemyScale = new Vector3(1f, 1f, 1f);
+ 
+        Vector3 tankRotation = Vector3.Zero;
+        Vector3 enemyRotation = new Vector3(0, - (float) Math.PI/2, 0);
+        
+        for (int i = 0; i < maxTanks; ++i)
+        {
+            Prop allieTank = new Prop(alliesPosition, alliesScale, Vector3.Zero, Color.Gold);
+            allieTank.Initialize();
+
+            
+            Prop enemyTank = new Prop(enemyPosition, enemyScale, enemyRotation, Color.Red); 
+            enemyTank.Initialize();
+            
+            _tanksAllies.Add(allieTank);
+            _tanksEnemies.Add(enemyTank); 
+            
+            alliesPosition += tanksOffset;
+            enemyPosition += tanksOffset;
+        }
+        
+        _terrain = new Terrain(ContentFolderEffects + "BasicShader", Color.Green);
         _terrain.Initialize(GraphicsDevice, mapSize);
 
         _forest = new Forest();
@@ -78,11 +105,12 @@ public class TGCGame : Game
         // Configuramos nuestras matrices de la escena.
         // Esta hecho con el objetivo de que observe al terreno de forma isometrica 
         
+        _camera = new Camera(new Vector3(100,100,100), Vector3.Zero, Vector3.Up);
         _camera.Initialize();
         
         _projection =
-            Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, GraphicsDevice.Viewport.AspectRatio, 1, 250);
-
+            Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, GraphicsDevice.Viewport.AspectRatio, 1, (int) Math.Ceiling(Math.Sqrt(Math.Pow(mapSize, 2)  + Math.Pow(mapSize, 2))));
+        
         base.Initialize();
     }
 
@@ -95,7 +123,10 @@ public class TGCGame : Game
     {
         _terrain.LoadContent(Content);
         _forest.LoadContent(Content, ContentFolder3D, ContentFolderEffects + "BasicShader");
-
+        
+        _tanksAllies.ForEach(t => t.LoadContent(Content, ContentFolder3D + "tanks/Panzer/Panzer",  ContentFolderEffects + "BasicShader"));
+        _tanksEnemies.ForEach(t => t.LoadContent(Content, ContentFolder3D + "tanks/T90/T90",  ContentFolderEffects + "BasicShader"));
+        
         base.LoadContent();
     }
 
@@ -107,25 +138,18 @@ public class TGCGame : Game
     protected override void Update(GameTime gameTime)
     {
         // Aca deberiamos poner toda la logica de actualizacion del juego.
-
+        
         // Capturar Input teclado
         if (Keyboard.GetState().IsKeyDown(Keys.Escape))
         {
             //Salgo del juego.
             Exit();
         }
-
+        
         var elapsedTime = Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
-
-        if (Keyboard.GetState().IsKeyDown(Keys.Down))
-        {
-            _camera.Update(Keyboard.GetState(),  elapsedTime);
-        }
-        else if (Keyboard.GetState().IsKeyDown(Keys.Up))
-        {
-            _camera.Update(Keyboard.GetState(), elapsedTime);
-        }
-
+        
+       _camera.Update(Keyboard.GetState(), elapsedTime);
+       
         base.Update(gameTime);
     }
 
@@ -136,10 +160,13 @@ public class TGCGame : Game
     protected override void Draw(GameTime gameTime)
     {
         GraphicsDevice.Clear(Color.Black);
-        //GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+        // GraphicsDevice.DepthStencilState = DepthStencilState.Default;
         
         _terrain.Draw(GraphicsDevice, _camera.GetView(), _projection);
         _forest.Draw(GraphicsDevice, _camera.GetView(), _projection);
+        
+        _tanksEnemies.ForEach(t => t.Draw(GraphicsDevice, _camera.GetView(), _projection));
+        _tanksAllies.ForEach(t => t.Draw(GraphicsDevice, _camera.GetView(), _projection));
     }
 
     /// <summary>

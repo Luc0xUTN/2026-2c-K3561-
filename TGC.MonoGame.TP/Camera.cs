@@ -37,8 +37,9 @@ public class Camera
         {
             _position -= cameraVelocity;
         }
-
-        _view = Matrix.CreateLookAt(_position, Vector3.Zero, Vector3.Up);
+        
+        
+        _view = Matrix.CreateLookAt(_position, _target, _up);
     }
 
     public Matrix GetView()
