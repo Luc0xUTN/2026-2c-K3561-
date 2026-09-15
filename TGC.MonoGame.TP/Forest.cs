@@ -8,14 +8,19 @@ namespace TGC.MonoGame.TP;
 
 public class Forest
 {
+    private List<Prop> _props;
     private List<Prop> _trees;
-    private Model _treeModel;
+    private List<Prop> _rocks;
+
+    private float _rockProbability = 0.1f;
 
 
     public void Initialize(Vector2 mapSize, float spacing = 5f)
     {
-        var random = new Random();
+        _props = new List<Prop>();
         _trees = new List<Prop>();
+        _rocks = new List<Prop>();
+        var random = new Random();
 
         int countX = (int)MathF.Floor(mapSize.X / spacing);
         int countZ = (int)MathF.Floor(mapSize.Y / spacing);
@@ -38,27 +43,60 @@ public class Forest
                 posZ += ((float)random.NextDouble() * 2f - 1f) * maxPositionVariation;
 
                 float rColor = (float)random.NextDouble();
-                Color color = Color.Lerp(Color.SaddleBrown, Color.DarkGreen, rColor);
 
-                float scaleVariationY = (float)random.NextDouble() * 2;
-                float scaleVariationXZ = (float)random.NextDouble() + 1;
-                Vector3 scale = new Vector3(scaleVariationXZ, scaleVariationY, scaleVariationXZ);
+                if (random.NextDouble() < _rockProbability)
+                {
+                    Color color = Color.Lerp(Color.DimGray, Color.DarkGray, rColor);
+                    float scaleVariation = (float)random.NextDouble() * 2;
+                    Vector3 scale = new Vector3(scaleVariation, scaleVariation, scaleVariation);
 
-                var tree = new Prop(new Vector3(posX, 0, posZ), scale, new Vector3(0,0,0), color);
-                tree.Initialize();
-                _trees.Add(tree);
+                    var rock = new Prop(new Vector3(posX, 0, posZ), scale, new Vector3(0,0,0), color);
+                    rock.Initialize();
+
+                    _rocks.Add(rock);
+                    _props.Add(rock);
+                }
+                else
+                {
+                    Color color = Color.Lerp(Color.SaddleBrown, Color.DarkGreen, rColor);
+
+                    float scaleVariationY = (float)random.NextDouble() * 2;
+                    float scaleVariationXZ = (float)random.NextDouble() + 1;
+                    Vector3 scale = new Vector3(scaleVariationXZ, scaleVariationY, scaleVariationXZ);
+
+                    var tree = new Prop(new Vector3(posX, 0, posZ), scale, new Vector3(0,0,0), color);
+                    tree.Initialize();
+
+                    _trees.Add(tree);
+                    _props.Add(tree);    
+                }
             }
         }
     }
 
     public void LoadContent(ContentManager content, string contentFolder3D, string shaderRoute)
     {
-        _treeModel = content.Load<Model>(contentFolder3D + "forest/Tree/Tree");
-        _trees.ForEach(tree => tree.LoadContent(content, _treeModel, shaderRoute));
+        var treeModel = content.Load<Model>(contentFolder3D + "forest/Tree/Tree");
+        List<Model> rockModels = new List<Model>();
+        for (int i = 0; i < 4; i++)
+        {
+            var rockModel = content.Load<Model>($"{contentFolder3D}forest/Rocks/Rock{i}");
+            rockModels.Add(rockModel);
+        }
+        
+        _trees.ForEach(tree => tree.LoadContent(content, treeModel, shaderRoute));
+
+        var random = new Random();
+        _rocks.ForEach(rock =>
+        {
+            int rockType = (int)random.NextInt64(rockModels.Count);
+            rock.LoadContent(content, rockModels[rockType], shaderRoute);
+        });
+
     }
 
     public void Draw(GraphicsDevice device, Matrix view, Matrix projection)
     {
-        _trees.ForEach(tree => tree.Draw(device, view, projection));
+        _props.ForEach(prop => prop.Draw(device, view, projection));
     }
 }

@@ -11,7 +11,7 @@ public class Camera
     private Vector3 _target;
     private Vector3 _up;
     
-    private float _speed = 10.0f;
+    private float _speed = 25.0f;
 
     public Camera(Vector3 position,  Vector3 target, Vector3 up)
     {
