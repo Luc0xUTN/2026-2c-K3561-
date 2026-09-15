@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Numerics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Vector2 = Microsoft.Xna.Framework.Vector2;
+using Vector3 = Microsoft.Xna.Framework.Vector3;
 
 namespace TGC.MonoGame.TP;
 
@@ -21,17 +24,13 @@ public class TGCGame : Game
     
     private readonly GraphicsDeviceManager _graphics;
 
-    private Effect _effect;
-    private Model _model;
     private Matrix _projection;
-    private float _rotation;
-    private SpriteBatch _spriteBatch;
-    private Matrix _view;
-    private Matrix _world;
 
     private Terrain _terrain;
     private Forest _forest;
 
+    private Camera _camera;
+    
     private Vector3 _cameraPosition;
 
     /// <summary>
@@ -51,8 +50,8 @@ public class TGCGame : Game
         // Hace que el mouse sea visible.
         IsMouseVisible = true;
         
-        _terrain = new Terrain(ContentFolderEffects + "BasicShader", Color.Green); 
-        
+        _terrain = new Terrain(ContentFolderEffects + "BasicShader", Color.Green);
+        _camera = new Camera(new Vector3(100,100,100), Vector3.Zero, Vector3.Up);
     }
 
     /// <summary>
@@ -61,9 +60,7 @@ public class TGCGame : Game
     /// </summary>
     protected override void Initialize()
     {
-        // La logica de inicializacion que no depende del contenido se recomienda poner en este metodo.
-
-        float mapSize = 125f;
+        float mapSize = 200f;
 
         _terrain.Initialize(GraphicsDevice, mapSize);
 
@@ -79,10 +76,10 @@ public class TGCGame : Game
         // Seria hasta aca.
 
         // Configuramos nuestras matrices de la escena.
-        _world = Matrix.Identity;
         // Esta hecho con el objetivo de que observe al terreno de forma isometrica 
-        _cameraPosition = new Vector3(100, 100, 100);
-        _view = Matrix.CreateLookAt(_cameraPosition, Vector3.Zero, Vector3.Up);
+        
+        _camera.Initialize();
+        
         _projection =
             Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, GraphicsDevice.Viewport.AspectRatio, 1, 250);
 
@@ -97,29 +94,7 @@ public class TGCGame : Game
     protected override void LoadContent()
     {
         _terrain.LoadContent(Content);
-        
-        // Aca es donde deberiamos cargar todos los contenido necesarios antes de iniciar el juego.
-        _spriteBatch = new SpriteBatch(GraphicsDevice);
-        
-        // Cargo el modelo del logo.
-        _model = Content.Load<Model>(ContentFolder3D + "tgc-logo/tgc-logo");
-
-        // Cargo un efecto basico propio declarado en el Content pipeline.
-        // En el juego no pueden usar BasicEffect de MG, deben usar siempre efectos propios.
-        _effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
-
         _forest.LoadContent(Content, ContentFolder3D, ContentFolderEffects + "BasicShader");
-
-        // Asigno el efecto que cargue a cada parte del mesh.
-        // Un modelo puede tener mas de 1 mesh internamente.
-        foreach (var mesh in _model.Meshes)
-        {
-            // Un mesh puede tener mas de 1 mesh part (cada 1 puede tener su propio efecto).
-            foreach (var meshPart in mesh.MeshParts)
-            {
-                meshPart.Effect = _effect;
-            }
-        }
 
         base.LoadContent();
     }
@@ -142,18 +117,15 @@ public class TGCGame : Game
 
         var elapsedTime = Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
 
-        var cameraSpeed = 10;
-        var cameraVelocity = cameraSpeed * elapsedTime * Vector3.One;
         if (Keyboard.GetState().IsKeyDown(Keys.Down))
         {
-            _cameraPosition += cameraVelocity;
+            _camera.Update(Keyboard.GetState(),  elapsedTime);
         }
         else if (Keyboard.GetState().IsKeyDown(Keys.Up))
         {
-            _cameraPosition -= cameraVelocity;
+            _camera.Update(Keyboard.GetState(), elapsedTime);
         }
 
-        _view = Matrix.CreateLookAt(_cameraPosition, Vector3.Zero, Vector3.Up);
         base.Update(gameTime);
     }
 
@@ -166,8 +138,8 @@ public class TGCGame : Game
         GraphicsDevice.Clear(Color.Black);
         //GraphicsDevice.DepthStencilState = DepthStencilState.Default;
         
-        _terrain.Draw(GraphicsDevice, _view, _projection);
-        _forest.Draw(GraphicsDevice, _view, _projection);
+        _terrain.Draw(GraphicsDevice, _camera.GetView(), _projection);
+        _forest.Draw(GraphicsDevice, _camera.GetView(), _projection);
     }
 
     /// <summary>

@@ -44,9 +44,8 @@ public class Forest
                 float scaleVariationXZ = (float)random.NextDouble() + 1;
                 Vector3 scale = new Vector3(scaleVariationXZ, scaleVariationY, scaleVariationXZ);
 
-                var tree = new Prop(new Vector3(posX, 0, posZ), color);
+                var tree = new Prop(new Vector3(posX, 0, posZ), scale, new Vector3(0,0,0), color);
                 tree.Initialize();
-                tree.SetScale(scale);
                 _trees.Add(tree);
             }
         }

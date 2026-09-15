@@ -6,9 +6,10 @@ namespace TGC.MonoGame.TP;
 
 public class Prop
 {
-    private Vector3 _position;
+    private Vector3 _position; 
     private Vector3 _scale;
-
+    private Vector3 _rotation;
+    
     private Color _color;
 
     private Matrix _world;
@@ -16,15 +17,17 @@ public class Prop
     private Model _model;
     private Effect _effect;
     
-    public Prop(Vector3 position, Color color)
+    public Prop(Vector3 position, Vector3 scale, Vector3 rotation,  Color color)
     {
         _position = position;
+        _scale = scale;
+        _rotation = rotation;
         _color = color;
     }
 
     public void Initialize()
     {
-        _world = Matrix.CreateTranslation(_position);
+        this.RebuildWorld();
     }
 
     public void LoadContent(ContentManager content, string modelRoute, string shaderRoute)
@@ -67,6 +70,7 @@ public class Prop
 
     private void RebuildWorld()
     {
-        _world = Matrix.CreateScale(_scale) * Matrix.CreateTranslation(_position);
+        Quaternion rotation = Quaternion.CreateFromYawPitchRoll(_rotation.X, _rotation.Y, _rotation.Z);
+        _world =  Matrix.CreateScale(_scale) * Matrix.CreateFromQuaternion(rotation) * Matrix.CreateTranslation(_position);
     }
 }
